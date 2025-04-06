@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>時間差計算機</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    button {
+      padding: 10px;
+      margin: 5px;
+    }
+    #result {
+      margin-top: 20px;
+    }
+    a {
+      color: blue;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .warning {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>時間差計算機</h1>
+  <p>今天與以下日期之間的時間差：</p>
+
+  <div>
+    <button onclick="calculate()">計算時間差</button>
+  </div>
+
+  <div id="result">
+    <p id="diff1"></p>
+    <p id="diff2"></p>
+    <p id="diff3"></p>
+    <p id="diff4"></p>
+  </div>
+
+  <hr>
+  <h2>自動展延門號效期</h2>
+  <label for="expiryDate">選擇門號效期：</label>
+  <input type="date" id="expiryDate">
+  <button onclick="saveExpiryDate()">儲存日期</button>
+  <button onclick="clearExpiryDate()">清除</button>
+
+  <div id="expiryInfo" style="margin-top: 10px;"></div>
+
+  <script>
+    function calculate() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const date1 = new Date(today.getFullYear(), 5, 19);
+      const date2 = new Date(today.getFullYear(), 6, 5);
+      const date3 = new Date(today.getFullYear(), 8, 17);
+      const date4 = new Date(today.getFullYear(), 10, 27);
+
+      const diff1 = Math.ceil((date1 - today) / (1000 * 60 * 60 * 24));
+      const diff2 = Math.ceil((date2 - today) / (1000 * 60 * 60 * 24));
+      const diff3 = Math.ceil((date3 - today) / (1000 * 60 * 60 * 24));
+      const diff4 = Math.ceil((date4 - today) / (1000 * 60 * 60 * 24));
+
+      document.getElementById("diff1").innerHTML = `今天到 06/19 (資訊處理，考試通知書) 的天數差: ${diff1} 天. <br><a href="https://wwwc.moex.gov.tw/main/exam/wFrmExamDetail.aspx?c=114080" target="_blank">考試資訊</a>`;
+      document.getElementById("diff2").innerHTML = `今天到 07/05 (重大轉折歷史事件，0704~0705，普考資訊處理，0706~0707，高考三級資訊處理) 的天數差: ${diff2} 天. <br><a href="https://wwwc.moex.gov.tw/main/exam/wFrmExamDetail.aspx?c=114080" target="_blank">考試資訊</a>`;
+      document.getElementById("diff3").innerHTML = `今天到 09/17 (資訊處理，榜示) 的天數差: ${diff3} 天. <br><a href="https://wwwc.moex.gov.tw/main/exam/wFrmExamDetail.aspx?c=114080" target="_blank">考試資訊</a>`;
+      document.getElementById("diff4").innerHTML = `今天到 11/27 (37歲生日，1988+1+9+8+8+1+1+2+7，無字天書) 的天數差: ${diff4} 天`;
+
+      loadExpiryDate();
+    }
+
+    function saveExpiryDate() {
+      const input = document.getElementById("expiryDate").value;
+      if (input) {
+        localStorage.setItem("expiryDate", input);
+        loadExpiryDate();
+      }
+    }
+
+    function clearExpiryDate() {
+      localStorage.removeItem("expiryDate");
+      document.getElementById("expiryDate").value = "";
+      document.getElementById("expiryInfo").innerHTML = "";
+    }
+
+    function loadExpiryDate() {
+      const savedDate = localStorage.getItem("expiryDate");
+      if (savedDate) {
+        document.getElementById("expiryDate").value = savedDate;
+
+        const expiry = new Date(savedDate);
+        expiry.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+        const triggerDate = new Date(expiry);
+        triggerDate.setDate(triggerDate.getDate() - 15);
+
+        let message = `
+          <p>門號效期日：<strong>${expiry.toLocaleDateString('zh-TW')}</strong></p>
+          <p>剩餘天數：<strong>${daysLeft}</strong> 天</p>
+          <p>將於 <strong>${triggerDate.toLocaleDateString('zh-TW')}</strong> 起，自動啟動展延機制（如符合條件）</p>
+        `;
+
+        if (daysLeft <= 15) {
+          message += `<p class="warning">⚠️ 警告：門號效期已低於 15 天，請注意是否符合展延條件！</p>`;
+        }
+
+        document.getElementById("expiryInfo").innerHTML = message;
+      }
+    }
+
+    calculate(); // 預設啟動
+  </script>
+</body>
+</html>
