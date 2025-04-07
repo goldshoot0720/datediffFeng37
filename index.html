@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>時間差計算機</title>
+  <title>時間差與儲備藥物計算</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,13 +16,6 @@
     #result {
       margin-top: 20px;
     }
-    a {
-      color: blue;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
     .warning {
       color: red;
       font-weight: bold;
@@ -34,7 +27,7 @@
   <p>今天與以下日期之間的時間差：</p>
 
   <div>
-    <button onclick="calculate()">計算時間差</button>
+    <button onclick="calculateTimeDiff()">計算時間差</button>
   </div>
 
   <div id="result">
@@ -45,6 +38,7 @@
   </div>
 
   <hr>
+
   <h2>自動展延門號效期</h2>
   <label for="expiryDate">選擇門號效期：</label>
   <input type="date" id="expiryDate">
@@ -53,8 +47,31 @@
 
   <div id="expiryInfo" style="margin-top: 10px;"></div>
 
+  <hr>
+
+  <h1>回診日期與儲備藥物計算</h1>
+
+  <!-- 回診日期輸入 -->
+  <div>
+    <label for="appointmentDate">選擇回診日期：</label>
+    <input type="date" id="appointmentDate">
+    <button onclick="saveAppointmentDate()">儲存回診日期並計算</button>
+  </div>
+
+  <div id="medicationResult"></div>
+
+  <hr>
+
+  <!-- 儲備藥物輸入 -->
+  <h2>儲備藥物設定</h2>
+  <label for="medicationStock">輸入儲備藥物顆數：</label>
+  <input type="number" id="medicationStock" placeholder="例如 30 顆">
+  <button onclick="saveMedicationStock()">儲存儲備藥物顆數</button>
+
+  <p>每一天固定使用 1 顆藥物。</p>
+
   <script>
-    function calculate() {
+    function calculateTimeDiff() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -118,7 +135,80 @@
       }
     }
 
-    calculate(); // 預設啟動
+    function saveAppointmentDate() {
+      const appointmentDate = document.getElementById("appointmentDate").value;
+      if (appointmentDate) {
+        localStorage.setItem("appointmentDate", appointmentDate); // 儲存回診日期到 localStorage
+        calculateMedication(); // 計算並顯示結果
+      } else {
+        alert("請選擇回診日期！");
+      }
+    }
+
+    function saveMedicationStock() {
+      const stock = document.getElementById("medicationStock").value;
+      if (stock && !isNaN(stock)) {
+        localStorage.setItem("medicationStock", stock); // 儲存藥物顆數到 localStorage
+        alert(`儲備藥物已儲存：${stock} 顆`);
+      } else {
+        alert("請輸入有效的儲備藥物顆數");
+      }
+    }
+
+    function calculateMedication() {
+      const appointmentDate = localStorage.getItem("appointmentDate");
+      const medicationStock = localStorage.getItem("medicationStock");
+
+      if (appointmentDate && medicationStock) {
+        const today = new Date();
+        const appointment = new Date(appointmentDate);
+        appointment.setHours(0, 0, 0, 0);
+
+        const diffDays = Math.ceil((appointment - today) / (1000 * 60 * 60 * 24)); // 計算回診日期距今天數差
+        const stockAmount = parseInt(medicationStock, 10);
+        const usagePerDay = 1; // 固定每天使用 1 顆藥物
+        const daysAvailable = Math.floor(stockAmount / usagePerDay); // 可使用的天數
+
+        const diff = daysAvailable - diffDays; // 計算剩餘藥物數量與回診日期差
+
+        let message = `回診日期距今天數差：${diffDays} 天<br>`;
+
+        // 顯示多餘或短少的藥物顆數
+        if (diff > 0) {
+          message += `剩餘藥物：${stockAmount} 顆，足夠使用 ${daysAvailable} 天<br>`;
+
+          // 換算多餘藥物為週數與天數
+          const weeks = Math.floor(diff / 7);
+          const days = diff % 7;
+
+          message += `多餘藥物：${diff} 顆，相當於 ${weeks} 週 ${days} 天`;
+        } else if (diff < 0) {
+          message += `剩餘藥物：${stockAmount} 顆，足夠使用 ${daysAvailable} 天<br>短少藥物：${-diff} 顆`;
+        } else {
+          message += `剩餘藥物：${stockAmount} 顆，足夠使用 ${daysAvailable} 天<br>剛好足夠，無多餘或短少`;
+        }
+
+        document.getElementById("medicationResult").innerHTML = message;
+      } else {
+        alert("請先儲存回診日期和儲備藥物顆數");
+      }
+    }
+
+    window.onload = function() {
+      const savedAppointmentDate = localStorage.getItem("appointmentDate");
+      const savedMedicationStock = localStorage.getItem("medicationStock");
+
+      if (savedAppointmentDate) {
+        document.getElementById("appointmentDate").value = savedAppointmentDate;
+        calculateMedication(); // 頁面重新載入後計算結果
+      }
+
+      if (savedMedicationStock) {
+        document.getElementById("medicationStock").value = savedMedicationStock;
+      }
+
+      calculateTimeDiff(); // 預設啟動
+    }
   </script>
 </body>
 </html>
